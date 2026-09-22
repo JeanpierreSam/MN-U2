@@ -1,64 +1,51 @@
-# Solver LU (Doolittle) — n variables
+# MN-U2 — Métodos Numéricos, Unidad 2
 
-Software para resolver sistemas de ecuaciones lineales $A\mathbf{x}=\mathbf{b}$
-mediante **factorización LU** (método de Doolittle, con pivoteo parcial),
-generalizado a **n incógnitas**. Hecho para la Sesión 6 de Métodos Numéricos
-(GT / GP / GAA).
+Repositorio con el trabajo de la **Unidad 2** del curso de Métodos Numéricos
+(UPeU). Cada sesión vive en su propia carpeta, con su propio `app.py`
+(Streamlit) y `requirements.txt`, para poder desplegarse de forma
+independiente en Streamlit Community Cloud sin afectar a las demás.
 
-## Contenido
+## Estructura
 
-- `lu_solver.py` — lógica numérica pura (sin interfaz): descomposición `P·A = L·U`,
-  sustitución hacia adelante, sustitución hacia atrás, y `resolver()` para
-  reutilizar `L` y `U` con múltiples vectores `b` sin recalcular la descomposición.
-- `app.py` — interfaz visual en **Streamlit**: permite ingresar `A` y uno o
-  varios vectores `b`, ver `P`, `L`, `U` como tablas coloreadas, la bitácora
-  de la triangulación, y la solución de cada sistema.
-- `requirements.txt` — dependencias (`streamlit`, `numpy`, `pandas`).
+```
+MN-U2/
+├── .gitignore
+├── README.md                 <- este archivo
+├── S6 - MN/                  <- Sesión 6: Sistemas de Ecuaciones Lineales (LU / Doolittle)
+│   ├── app.py                <- interfaz Streamlit
+│   ├── lu_solver.py           <- lógica numérica (LU con pivoteo, sustituciones)
+│   ├── requirements.txt
+│   └── README.md
+└── S7 - MN/                  <- (futuras sesiones se agregan igual)
+    └── ...
+```
 
-## Cómo ejecutarlo
-
-Desde esta carpeta (`S6 - MN`), en una terminal (PowerShell o cmd):
+## Cómo correr una sesión localmente
 
 ```bash
+cd "S6 - MN"
 python -m venv .venv
-.venv\Scripts\activate
+.venv\Scripts\activate        # Windows
 pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Esto abre la app en el navegador (normalmente `http://localhost:8501`).
+## Cómo desplegar una sesión en Streamlit Community Cloud
 
-## Uso rápido
+1. Sube el repo a GitHub (ver comandos más abajo).
+2. En [share.streamlit.io](https://share.streamlit.io) → **New app**.
+3. Selecciona el repo `JeanpierreSam/MN-U2`, la rama `main`.
+4. En **Main file path** escribe la ruta a la sesión que quieras desplegar,
+   por ejemplo: `S6 - MN/app.py`.
+5. Streamlit Cloud busca automáticamente el `requirements.txt` en esa misma
+   carpeta (no hace falta que esté en la raíz del repo).
+6. Cada sesión (`S6 - MN`, `S7 - MN`, ...) se despliega como una **app
+   separada**, con su propia URL, aunque compartan el mismo repositorio.
 
-1. En la barra lateral, define `n` (número de incógnitas) y, si quieres,
-   carga uno de los ejemplos de la Sesión 6 (GAA o GP).
-2. Edita la matriz `A` y el/los vector(es) `b` directamente en las tablas.
-3. Agrega más vectores `b` con el botón **"+ Agregar vector b"** — así se
-   demuestra la ventaja de LU: se descompone una sola vez y se reutiliza
-   para cada `b` nuevo (idea central de la Fase 2 de la GAA: "balanceo de
-   carga" con tráfico variable).
-4. Pulsa **"Descomponer (LU) y resolver todo"** para ver `P`, `L`, `U`,
-   los pasos de la triangulación y la solución de cada sistema, con su
-   residuo `‖A x − b‖` como verificación.
+## Cómo agregar una nueva sesión
 
-## Probar solo la lógica (sin interfaz)
-
-```bash
-python lu_solver.py
-```
-
-Corre una autoprueba con el ejercicio de la GAA y debe imprimir
-`x (b1) = [3, -6, 14]` y `x (b2) = [4.75, -10.1667, 21.3333]`.
-
-## Notas de diseño
-
-- Se usa **pivoteo parcial** (`P·A = L·U`) porque, a diferencia de los
-  ejemplos 3×3 de la guía (donde no hace falta), un solver genérico para
-  *n* variables sí puede toparse con un pivote nulo o muy pequeño.
-- La visualización de matrices usa `pandas.DataFrame.style` con
-  `background_gradient` para resaltar magnitudes, similar a lo que se
-  hace manualmente coloreando celdas en Excel.
-- Si más adelante se quiere una versión sin instalar nada (solo para
-  mostrar resultados), se puede exportar la misma lógica a una página
-  HTML/JS como alternativa — pero para trabajo de curso con Python,
-  Streamlit es la ruta más simple y rápida de desplegar.
+1. Crea una carpeta nueva, por ejemplo `S7 - MN/`.
+2. Copia dentro `app.py`, el/los módulo(s) de lógica, y su propio
+   `requirements.txt`.
+3. `git add`, `git commit`, `git push`.
+4. Crea una nueva app en Streamlit Cloud apuntando a `S7 - MN/app.py`.
