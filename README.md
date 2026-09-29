@@ -15,9 +15,11 @@ MN-U2/
 ├── app.py                              <- página de inicio (entry point de Streamlit)
 ├── lu_solver.py                         <- lógica de la Sesión 6 (LU / Doolittle)
 ├── iterative_solver.py                  <- lógica de la Sesión 7 (Jacobi / Gauss-Seidel)
+├── lagrange_solver.py                   <- lógica de la Sesión 8 (Interpolación de Lagrange)
 └── pages/
     ├── 1_Sesion_6_LU.py                 <- interfaz de la Sesión 6
-    └── 2_Sesion_7_Jacobi_GaussSeidel.py <- interfaz de la Sesión 7
+    ├── 2_Sesion_7_Jacobi_GaussSeidel.py <- interfaz de la Sesión 7
+    └── 3_Sesion_8_Interpolacion_Lagrange.py <- interfaz de la Sesión 8
 ```
 
 ## Cómo correr la app localmente
@@ -77,3 +79,17 @@ de navegación en la barra lateral.
   opcionalmente carga uno de los ejemplos de la GAA o la GP. Antes de
   iterar, la app muestra la verificación de dominancia diagonal (y el
   criterio de Sassenfeld si Gauss-Seidel y A no es EDD).
+
+## Sesión 8 — Interpolación de Lagrange
+
+- `lagrange_solver.py` — `lagrange()` (algoritmo de la GT con dos bucles
+  anidados, O(n²) por punto), `coeficientes_base()` / `coeficientes_polinomio()`
+  para la forma estándar, y `tabla_evaluacion()` para el paso a paso.
+- **Caso GAA — Latencia vs. memoria RAM de un microservicio:** nodos
+  (2,150), (4,85), (8,50), (12,70) →
+  P₃(x) = −(43/192)x³ + (227/32)x² − (1651/24)x + 261, y
+  **P₃(6) = 55.25 ms**.
+- En la página **"Sesión 8"**: edita los nodos y x_eval, ve los L_k(x),
+  el polinomio en forma estándar, la tabla de evaluación y la gráfica
+  (nodos + curva + punto interpolado resaltado). Incluye los ejercicios
+  de la GP como ejemplos precargados.
