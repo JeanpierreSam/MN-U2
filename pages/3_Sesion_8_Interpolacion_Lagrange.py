@@ -106,8 +106,16 @@ st.subheader("1️⃣ Nodos (x_i, y_i)")
 df_nodos = pd.DataFrame(
     st.session_state.nodos8,
     index=[f"x{i}" for i in range(n_nodos)],
+).astype(float)  # columnas decimales: si fueran int, el editor rechazaria 2.5
+df_edit = st.data_editor(
+    df_nodos,
+    width="stretch",
+    key=f"editor_nodos8_{n_nodos}",
+    column_config={
+        "x": st.column_config.NumberColumn("x", format="%g", step=0.01),
+        "y": st.column_config.NumberColumn("y", format="%g", step=0.01),
+    },
 )
-df_edit = st.data_editor(df_nodos, width="stretch", key=f"editor_nodos8_{n_nodos}")
 xs = df_edit["x"].to_numpy(dtype=float)
 ys = df_edit["y"].to_numpy(dtype=float)
 
