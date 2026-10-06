@@ -30,12 +30,16 @@ Elige una sesión en el menú de la izquierda:
   L_k(x), polinomio interpolador P_n(x) en forma estándar, evaluación
   paso a paso (algoritmo O(n²)) y gráfica de nodos + curva + punto
   interpolado.
+- **Sesión 9 — Interpolación de Newton**: tabla de diferencias divididas,
+  polinomio en forma de Newton y estándar, evaluación anidada O(n),
+  validación en los nodos y comparación de grados en tiempo real.
 """
 )
 
 st.page_link("pages/1_Sesion_6_LU.py", label="Ir a Sesión 6 — Factorización LU", icon="🧮")
 st.page_link("pages/2_Sesion_7_Jacobi_GaussSeidel.py", label="Ir a Sesión 7 — Jacobi / Gauss-Seidel", icon="🔁")
 st.page_link("pages/3_Sesion_8_Interpolacion_Lagrange.py", label="Ir a Sesión 8 — Interpolación de Lagrange", icon="📈")
+st.page_link("pages/4_Sesion_9_Interpolacion_Newton.py", label="Ir a Sesión 9 — Interpolación de Newton", icon="📐")
 
 st.markdown("---")
 st.caption("Repositorio: [JeanpierreSam/MN-U2](https://github.com/JeanpierreSam/MN-U2)")

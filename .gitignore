@@ -20,3 +20,6 @@ desktop.ini
 .vscode/
 .idea/
 *.swp
+
+# Archivos locales de clase / guias
+sesion9-gaa-interpolacion-newton-mn-u2.md

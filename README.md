@@ -16,10 +16,12 @@ MN-U2/
 ├── lu_solver.py                         <- lógica de la Sesión 6 (LU / Doolittle)
 ├── iterative_solver.py                  <- lógica de la Sesión 7 (Jacobi / Gauss-Seidel)
 ├── lagrange_solver.py                   <- lógica de la Sesión 8 (Interpolación de Lagrange)
+├── newton_solver.py                     <- lógica de la Sesión 9 (Interpolación de Newton)
 └── pages/
     ├── 1_Sesion_6_LU.py                 <- interfaz de la Sesión 6
     ├── 2_Sesion_7_Jacobi_GaussSeidel.py <- interfaz de la Sesión 7
-    └── 3_Sesion_8_Interpolacion_Lagrange.py <- interfaz de la Sesión 8
+    ├── 3_Sesion_8_Interpolacion_Lagrange.py <- interfaz de la Sesión 8
+    └── 4_Sesion_9_Interpolacion_Newton.py   <- interfaz de la Sesión 9
 ```
 
 ## Cómo correr la app localmente
@@ -93,3 +95,20 @@ de navegación en la barra lateral.
   el polinomio en forma estándar, la tabla de evaluación y la gráfica
   (nodos + curva + punto interpolado resaltado). Incluye los ejercicios
   de la GP como ejemplos precargados.
+
+## Sesión 9 — Interpolación de Newton (diferencias divididas)
+
+- `newton_solver.py` — `diferencias_divididas(X, Y)` (matriz triangular de
+  la TDD), `evaluar_newton()` (forma anidada, O(n) por punto),
+  `coeficientes_estandar()` para la forma a_n x^n + … + a_0,
+  `tabla_terminos()` para el paso a paso, Newton-Gregory
+  (`diferencias_finitas`, `coeficientes_newton_gregory`) y `cota_error()`.
+- **Caso GAA — Latencia de una API REST vs. carga concurrente:** nodos
+  (1,45), (2,65), (4,110), (7,220) (x en ×100 req/s) →
+  P₃(x) = (1/3)x³ − (3/2)x² + (133/6)x + 24, y **P₃(5) = 139 ms**
+  (P₁(5) = 125, P₂(5) = 135).
+- En la página **"Sesión 9"**: edita X e Y, ve la TDD, el polinomio en
+  forma de Newton y estándar, la evaluación término a término, la
+  validación en los nodos y un deslizador para comparar grados en tiempo
+  real sobre la gráfica. Incluye los ejercicios de la GT y la GP como
+  ejemplos precargados.
