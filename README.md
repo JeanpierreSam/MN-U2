@@ -80,7 +80,11 @@ de navegación en la barra lateral.
 - En la página **"Sesión 7"**, elige el método (Jacobi / Gauss-Seidel) y
   opcionalmente carga uno de los ejemplos de la GAA o la GP. Antes de
   iterar, la app muestra la verificación de dominancia diagonal (y el
-  criterio de Sassenfeld si Gauss-Seidel y A no es EDD).
+  criterio de Sassenfeld siempre que el método sea Gauss-Seidel), det(A) y
+  que la diagonal no tenga ceros.
+- La tabla de iteraciones muestra el error por componente (ε₁, ε₂, ε₃) y cada
+  ejemplo fija su tipo de error (relativo/absoluto). Se agregaron los
+  ejercicios 1 (tuberías) y 2 (Sassenfeld + Gauss-Seidel) del Repaso Examen 2.
 
 ## Sesión 8 — Interpolación de Lagrange
 

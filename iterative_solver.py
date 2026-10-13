@@ -62,6 +62,19 @@ def es_diagonal_dominante(A):
     return dominante, detalle
 
 
+def verificar_sistema(A):
+    """Devuelve (ok, mensajes, det): det(A) != 0 y diagonal sin ceros."""
+    A = np.array(A, dtype=float)
+    msgs = []
+    det = float(np.linalg.det(A))
+    if abs(det) < 1e-12:
+        msgs.append(f"det(A) = {det:.3g} ≈ 0: el sistema es singular (sin solución única).")
+    ceros = [i + 1 for i in range(A.shape[0]) if abs(A[i, i]) < 1e-12]
+    if ceros:
+        msgs.append(f"a_ii = 0 en la(s) fila(s) {ceros}: reordena las ecuaciones.")
+    return (not msgs), msgs, det
+
+
 def jacobi(A, b, x0=None, tol=1e-4, max_iter=100, error_relativo=True):
     """
     Metodo de Jacobi (Pasos 1-7, GT Sesion 7).
@@ -94,7 +107,8 @@ def jacobi(A, b, x0=None, tol=1e-4, max_iter=100, error_relativo=True):
     x : np.ndarray
         Solucion aproximada final.
     historial : list[dict]
-        Un registro por iteracion: {"k", "x", "error"}.
+        Un registro por iteracion: {"k", "x", "errores", "error"}
+        (errores = error por componente; error = su maximo).
     convergio : bool
         True si el error cayo por debajo de `tol` antes de `max_iter`.
     """
@@ -113,11 +127,12 @@ def jacobi(A, b, x0=None, tol=1e-4, max_iter=100, error_relativo=True):
 
         if error_relativo:
             with np.errstate(divide="ignore", invalid="ignore"):
-                error = float(np.max(np.abs((x_nuevo - x) / x_nuevo)))
+                errores = np.abs((x_nuevo - x) / x_nuevo)
         else:
-            error = float(np.max(np.abs(x_nuevo - x)))
+            errores = np.abs(x_nuevo - x)
+        error = float(np.max(errores))
 
-        historial.append({"k": k, "x": x_nuevo.copy(), "error": error})
+        historial.append({"k": k, "x": x_nuevo.copy(), "errores": errores.copy(), "error": error})
         x = x_nuevo
 
         if error < tol:
@@ -152,11 +167,12 @@ def gauss_seidel(A, b, x0=None, tol=1e-4, max_iter=100, error_relativo=True):
 
         if error_relativo:
             with np.errstate(divide="ignore", invalid="ignore"):
-                error = float(np.max(np.abs((x - x_anterior) / x)))
+                errores = np.abs((x - x_anterior) / x)
         else:
-            error = float(np.max(np.abs(x - x_anterior)))
+            errores = np.abs(x - x_anterior)
+        error = float(np.max(errores))
 
-        historial.append({"k": k, "x": x.copy(), "error": error})
+        historial.append({"k": k, "x": x.copy(), "errores": errores.copy(), "error": error})
 
         if error < tol:
             convergio = True
@@ -215,6 +231,17 @@ TOL_GP_GS = 1e-2
 # --- Ejemplo del criterio de Sassenfeld --- GT p.54
 A_SASSENFELD_EJEMPLO = [[10, 2, -1], [-1, 8, 2], [2, -1, 9]]
 
+# --- Repaso Examen 2, Ejercicio 1: flujo de caudales en 3 tuberias (3x3) ---
+A_REPASO_TUBERIAS = [[10, -2, 1], [-3, 9, 2], [2, -1, 7]]
+B_REPASO_TUBERIAS = [27, -8, 15]
+X0_REPASO_TUBERIAS = [0, 0, 0]
+
+# --- Repaso Examen 2, Ejercicio 2: Sassenfeld + Gauss-Seidel (3x3) ---
+A_REPASO_EJ2 = [[10, 1, 2], [4, 6, -1], [-2, 3, 8]]
+B_REPASO_EJ2 = [3, 9, 51]
+X0_REPASO_EJ2 = [0, 0, 0]      # asumido: el enunciado no da aproximacion inicial
+TOL_REPASO_EJ2 = 1e-2          # error relativo < 10^-2
+
 
 if __name__ == "__main__":
     print("=== GAA: Balanceo de carga (Jacobi) ===")
@@ -247,7 +274,7 @@ if __name__ == "__main__":
     for reg in historial_gs:
         print(reg["k"], np.round(reg["x"], 6), reg["error"])
     print("Convergio:", convergio_gs, "en", len(historial_gs), "iteraciones")
-    # esperado: converge en 3 iteraciones a x = [1.00, -2.00, 1.00]
+    # esperado: converge en 4 iteraciones a x = [1.00, -2.00, 1.00]
 
     print("\n=== Criterio de Sassenfeld (ejemplo GT p.54) ===")
     beta, converge = criterio_sassenfeld(A_SASSENFELD_EJEMPLO)

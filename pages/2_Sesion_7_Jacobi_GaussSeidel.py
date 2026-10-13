@@ -16,17 +16,25 @@ from iterative_solver import (
     A_GAA_CLUSTER,
     A_GP_GS,
     A_GP_JACOBI,
+    A_REPASO_EJ2,
+    A_REPASO_TUBERIAS,
     B_GAA_CLUSTER,
     B_GP_GS,
     B_GP_JACOBI,
+    B_REPASO_EJ2,
+    B_REPASO_TUBERIAS,
     TOL_GAA_CLUSTER,
     TOL_GP_GS,
+    TOL_REPASO_EJ2,
     X0_GAA_CLUSTER,
     X0_GP_GS,
+    X0_REPASO_EJ2,
+    X0_REPASO_TUBERIAS,
     criterio_sassenfeld,
     es_diagonal_dominante,
     gauss_seidel,
     jacobi,
+    verificar_sistema,
 )
 
 st.set_page_config(page_title="Jacobi / Gauss-Seidel - MN-U2", page_icon="🔁", layout="wide")
@@ -41,17 +49,27 @@ EJEMPLOS = {
     "(ninguno)": None,
     "GAA - Sesión 7: Balanceo de carga (4x4, Jacobi)": {
         "A": A_GAA_CLUSTER, "b": B_GAA_CLUSTER, "x0": X0_GAA_CLUSTER,
-        "tol": TOL_GAA_CLUSTER, "max_iter": 100, "metodo": "Jacobi",
+        "tol": TOL_GAA_CLUSTER, "max_iter": 100, "metodo": "Jacobi", "error_relativo": True,
     },
     "GP - Sesión 7: Ejercicio de Jacobi (3x3, 4 iter.)": {
         "A": A_GP_JACOBI, "b": B_GP_JACOBI, "x0": [0, 0, 0],
         # tol=0.0 es inalcanzable a propósito: el ejercicio de la GP pide
         # EXACTAMENTE 4 iteraciones, no un criterio de parada por error.
-        "tol": 0.0, "max_iter": 4, "metodo": "Jacobi",
+        "tol": 0.0, "max_iter": 4, "metodo": "Jacobi", "error_relativo": False,
     },
     "GP - Sesión 7: Ejemplo de Gauss-Seidel (3x3)": {
         "A": A_GP_GS, "b": B_GP_GS, "x0": X0_GP_GS,
-        "tol": TOL_GP_GS, "max_iter": 100, "metodo": "Gauss-Seidel",
+        "tol": TOL_GP_GS, "max_iter": 100, "metodo": "Gauss-Seidel", "error_relativo": False,
+    },
+    "Repaso Examen 2 - Ej. 1: Tuberías (3x3, Gauss-Seidel, 4 iter.)": {
+        "A": A_REPASO_TUBERIAS, "b": B_REPASO_TUBERIAS, "x0": X0_REPASO_TUBERIAS,
+        # tol=0.0 es inalcanzable a propósito: el ejercicio pide un número fijo de iteraciones
+        # ("al menos 3"); se dejan 4 para ver la convergencia.
+        "tol": 0.0, "max_iter": 4, "metodo": "Gauss-Seidel", "error_relativo": True,
+    },
+    "Repaso Examen 2 - Ej. 2: Sassenfeld + Gauss-Seidel (3x3)": {
+        "A": A_REPASO_EJ2, "b": B_REPASO_EJ2, "x0": X0_REPASO_EJ2,
+        "tol": TOL_REPASO_EJ2, "max_iter": 100, "metodo": "Gauss-Seidel", "error_relativo": True,
     },
 }
 
@@ -71,6 +89,7 @@ if pendiente is not None:
     st.session_state["tol7"] = ej["tol"]
     st.session_state["maxit7"] = ej["max_iter"]
     st.session_state["metodo7"] = ej["metodo"]
+    st.session_state["errrel7"] = ej.get("error_relativo", True)
 
 # ---------------------------------------------------------------------
 # Barra lateral: configuración
@@ -130,6 +149,8 @@ with col_x0:
 # 2. Análisis preliminar de convergencia
 # ---------------------------------------------------------------------
 st.subheader("2️⃣ Análisis preliminar de convergencia")
+ok_sistema, msgs_sistema, det_A = verificar_sistema(A)
+st.caption(f"det(A) = {det_A:.6g}")
 dominante, detalle = es_diagonal_dominante(A)
 st.dataframe(pd.DataFrame(detalle), width="stretch")
 
@@ -140,29 +161,42 @@ else:
         "A NO es EDD por filas. La condición es suficiente, no necesaria (GT, Sesión 7): "
         "puede converger igual, pero no está garantizado."
     )
-    if metodo == "Gauss-Seidel":
-        beta, converge_sassenfeld = criterio_sassenfeld(A)
-        st.dataframe(pd.DataFrame({"i": range(1, n + 1), "β_i": beta}), width="stretch")
-        if converge_sassenfeld:
-            st.info(f"Criterio de Sassenfeld: max(β_i) = {beta.max():.4f} < 1 → Gauss-Seidel converge.")
-        else:
-            st.error(f"Criterio de Sassenfeld: max(β_i) = {beta.max():.4f} ≥ 1 → no se garantiza convergencia.")
+
+if metodo == "Gauss-Seidel" and np.all(np.diag(A) != 0):
+    beta, converge_sassenfeld = criterio_sassenfeld(A)
+    st.dataframe(pd.DataFrame({"i": range(1, n + 1), "β_i": beta}), width="stretch")
+    if converge_sassenfeld:
+        st.info(f"Criterio de Sassenfeld: max(β_i) = {beta.max():.4f} < 1 → Gauss-Seidel converge.")
+    else:
+        st.error(f"Criterio de Sassenfeld: max(β_i) = {beta.max():.4f} ≥ 1 → no se garantiza convergencia.")
 
 # ---------------------------------------------------------------------
 # 3. Iterar
 # ---------------------------------------------------------------------
 if st.button("🚀 Ejecutar iteraciones", type="primary", width="stretch"):
     try:
+        if not ok_sistema:
+            for m in msgs_sistema:
+                st.error(m)
+            st.stop()
+
         if metodo == "Jacobi":
             x_final, historial, convergio = jacobi(A, b, x0, tol, int(max_iter), error_relativo)
         else:
             x_final, historial, convergio = gauss_seidel(A, b, x0, tol, int(max_iter), error_relativo)
+
+        if any(not np.isfinite(reg["error"]) for reg in historial):
+            st.warning(
+                "El error relativo dio inf/NaN en alguna iteración (una incógnita vale 0). "
+                "Si no converge, usa error absoluto."
+            )
 
         st.subheader("3️⃣ Historial de iteraciones")
         tabla = []
         for reg in historial:
             fila = {"k": reg["k"]}
             fila.update({f"x{i + 1}": round(float(reg["x"][i]), 6) for i in range(n)})
+            fila.update({f"ε{i + 1}": float(reg["errores"][i]) for i in range(n)})
             fila["error"] = reg["error"]
             tabla.append(fila)
         df_hist = pd.DataFrame(tabla)
