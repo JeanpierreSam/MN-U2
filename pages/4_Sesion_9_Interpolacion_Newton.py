@@ -11,12 +11,19 @@ Parte de la suite MN-U2. Ejecutar con:
     streamlit run app.py
 """
 
+import math
+
 import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
 
 from newton_solver import (
+    DMAX_REPASO_EJ6,
+    X_REPASO_EJ6,
+    XEVAL_REPASO_EJ6,
+    Y_REPASO_EJ6,
+    cota_error,
     INTERVALO_GAA,
     X_GAA_LATENCIA,
     X_GP_CLASE,
@@ -109,6 +116,10 @@ EJEMPLOS = {
         "x": X_REPASO_EJ5, "y": Y_REPASO_EJ5, "xeval": XEVAL_REPASO_EJ5, "a": 0, "b": 6,
         "metodo": "Newton-Gregory progresivo",
     },
+    "Repaso Examen 2 - Ej. 6: Cota del error, f(x)=1/(1+x), f(1.3)": {
+        "x": X_REPASO_EJ6, "y": Y_REPASO_EJ6, "xeval": XEVAL_REPASO_EJ6, "a": 0, "b": 2,
+        "metodo": "Diferencias divididas", "dmax": DMAX_REPASO_EJ6, "freal": 1 / 2.3,
+    },
 }
 
 METODOS = ["Diferencias divididas", "Newton-Gregory progresivo"]
@@ -131,6 +142,9 @@ if pendiente is not None:
     st.session_state["b9"] = float(ej["b"])
     if "metodo" in ej:
         st.session_state["metodo9"] = ej["metodo"]
+    st.session_state["dmax9"] = float(ej.get("dmax", 0.0))
+    st.session_state["usar_real9"] = "freal" in ej
+    st.session_state["freal9"] = float(ej.get("freal", 0.0))
     st.session_state.pop("grado9", None)
 
 # ---------------------------------------------------------------------
@@ -335,6 +349,47 @@ st.altair_chart(curvas + nodos + guia + punto + etiqueta, width="stretch")
 
 csv = df_curva.to_csv(index=False).encode("utf-8")
 st.download_button("⬇️ Descargar curvas (CSV)", csv, "curva_newton.csv", "text/csv")
+
+# ---------------------------------------------------------------------
+# 6. Cota del error de interpolacion (GT, "Limitante superior para el error")
+# ---------------------------------------------------------------------
+st.subheader(f"6️⃣ Cota del error de interpolación en x = {x_eval:g}")
+st.markdown(
+    f"|E_{grado_max}(x)| ≤ |(x−x₀)(x−x₁)…(x−x_{grado_max})| / {grado_max + 1}! · máx|f^({grado_max + 1})(t)|"
+)
+st.caption(
+    f"Necesitas f(x) analítica: calcula la derivada de orden {grado_max + 1} y su máximo en el "
+    f"intervalo de los nodos [{xs.min():g}, {xs.max():g}], e ingrésalo aquí."
+)
+dmax = st.number_input(f"máx |f^({grado_max + 1})(t)| en [{xs.min():g}, {xs.max():g}]",
+                       min_value=0.0, format="%.6f", key="dmax9")
+_producto = float(np.prod(np.abs(x_eval - xs)))
+_cota = cota_error(xs, x_eval, dmax)
+c1, c2, c3 = st.columns(3)
+c1.metric("∏|x − xᵢ|", f"{_producto:.6f}")
+c2.metric(f"(n+1)! = {grado_max + 1}!", f"{math.factorial(grado_max + 1)}")
+if dmax > 0:
+    c3.metric("Cota del error", f"{_cota:.6f}")
+else:
+    c3.metric("Cota del error", "—")
+    st.info(
+        f"Ingresa máx |f^({grado_max + 1})(t)| (> 0) para calcular la cota. Solo aplica si "
+        "conoces f(x) analíticamente; con datos tabulados no hay cota."
+    )
+if st.checkbox("Comparar con el valor real f(x_eval)", key="usar_real9"):
+    f_real = st.number_input("Valor real f(x_eval)", format="%.6f", key="freal9")
+    _p = evaluar_newton(xs, coef, x_eval)
+    _err = abs(f_real - _p)
+    if dmax <= 0:
+        st.write(f"Error real |f(x) − P(x)| = **{_err:.6f}**")
+    else:
+        st.write(f"Error real |f(x) − P(x)| = **{_err:.6f}**  ·  cota = **{_cota:.6f}**")
+    if dmax <= 0:
+        pass
+    elif _err <= _cota + 1e-12:
+        st.success("El error real está dentro de la cota, como debe ser.")
+    else:
+        st.warning("El error real supera la cota: revisa la derivada máxima que ingresaste.")
 
 st.markdown("---")
 st.caption(

@@ -355,6 +355,13 @@ X_REPASO_EJ5 = [0, 2, 4, 6]
 Y_REPASO_EJ5 = [0.0, 1.6, 3.5, 6.3]
 XEVAL_REPASO_EJ5 = 5
 
+# Repaso Examen 2, Ej. 6: f(x) = 1/(1+x), nodos 0, 1, 2, estimar f(1.3).
+# max|f'''(t)| en [0, 2] = 6 (en t = 0). Cota esperada = 0.273.
+X_REPASO_EJ6 = [0, 1, 2]
+Y_REPASO_EJ6 = [1.0, 0.5, 1.0 / 3.0]
+XEVAL_REPASO_EJ6 = 1.3
+DMAX_REPASO_EJ6 = 6.0
+
 
 if __name__ == "__main__":
     import sys
@@ -405,6 +412,7 @@ if __name__ == "__main__":
     print("a_i =", c, "| f(2.5) =", evaluar_newton(X_GT_NG_H1, c, 2.5))
 
     print("\n=== GT: cota de error, f(x) = e^x - x^2 + 1 en x = 1.2, nodos 0.5, 1, 1.5 ===")
+    print("Ej6: |E2(1.3)| <=", round(cota_error(X_REPASO_EJ6, XEVAL_REPASO_EJ6, DMAX_REPASO_EJ6), 4))  # 0.273
     print("|E2(1.2)| <=", round(cota_error([0.5, 1.0, 1.5], 1.2, np.exp(1.5)), 4))  # 0.0314
 
     print("\n=== GP (con Newton) ===")
