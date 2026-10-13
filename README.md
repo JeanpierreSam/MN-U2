@@ -116,3 +116,13 @@ de navegación en la barra lateral.
   validación en los nodos y un deslizador para comparar grados en tiempo
   real sobre la gráfica. Incluye los ejercicios de la GT y la GP como
   ejemplos precargados.
+- **Selector de método** (barra lateral): *Diferencias divididas* o
+  *Newton-Gregory progresivo*. Con Newton-Gregory la página verifica que
+  los nodos estén igualmente espaciados (muestra h), arma la tabla de
+  diferencias finitas Δ y evalúa con s = (x − x₀)/h término a término; si
+  los nodos no son equiespaciados avisa y sugiere diferencias divididas.
+  Ambos métodos dan el mismo polinomio.
+- Ejemplos del **Repaso Examen 2**: Ej. 4 (puente colgante: 3 nodos del
+  profesor, P₂(50) = 27, P₂(70) = 46; o los 5 datos, P₄(50) = 27.1875) y
+  Ej. 5 (asentamiento de zapata con Newton-Gregory: h = 2, s = 2.5,
+  P₃(5) = 4.75 mm).

@@ -32,7 +32,9 @@ Elige una sesión en el menú de la izquierda:
   interpolado.
 - **Sesión 9 — Interpolación de Newton**: tabla de diferencias divididas,
   polinomio en forma de Newton y estándar, evaluación anidada O(n),
-  validación en los nodos y comparación de grados en tiempo real.
+  validación en los nodos y comparación de grados en tiempo real. Incluye
+  **Newton-Gregory progresivo** (nodos equiespaciados): verificación del
+  espaciado, tabla de diferencias finitas y la variable s.
 """
 )
 

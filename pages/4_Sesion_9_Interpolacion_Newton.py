@@ -1,9 +1,11 @@
 """
 4_Sesion_9_Interpolacion_Newton.py
 ----------------------------------
-Interfaz Streamlit para la interpolacion polinomica de Newton con
-diferencias divididas, generalizada a n+1 nodos (por defecto 4 nodos ->
-P_3, como pide la GAA). Incluye el comparador de grado en tiempo real.
+Interfaz Streamlit para la interpolacion polinomica de Newton, generalizada
+a n+1 nodos (por defecto 4 nodos -> P_3, como pide la GAA), con dos metodos
+a elegir en la barra lateral: diferencias divididas y Newton-Gregory
+progresivo (nodos igualmente espaciados). Incluye el comparador de grado en
+tiempo real.
 
 Parte de la suite MN-U2. Ejecutar con:
     streamlit run app.py
@@ -25,7 +27,11 @@ from newton_solver import (
     X_GT_EXP_SIN,
     X_GT_NG_H1,
     X_GT_TABLA_G3,
+    X_REPASO_EJ4,
+    X_REPASO_EJ4_5N,
+    X_REPASO_EJ5,
     XEVAL_GAA_LATENCIA,
+    XEVAL_REPASO_EJ5,
     Y_GAA_LATENCIA,
     Y_GP_CLASE,
     Y_GP_EJ1,
@@ -35,20 +41,29 @@ from newton_solver import (
     Y_GT_EXP_SIN,
     Y_GT_NG_H1,
     Y_GT_TABLA_G3,
+    Y_REPASO_EJ4,
+    Y_REPASO_EJ4_5N,
+    Y_REPASO_EJ5,
     coeficientes_estandar,
+    coeficientes_newton,
+    coeficientes_newton_gregory,
     diferencias_divididas,
+    diferencias_finitas,
+    es_equiespaciado,
     evaluar_newton,
+    forma_gregory_texto,
     forma_newton_texto,
     polinomio_a_texto,
     tabla_terminos,
+    tabla_terminos_gregory,
 )
 
 st.set_page_config(page_title="Interpolación de Newton - MN-U2", page_icon="📐", layout="wide")
 
 st.title("📐 Interpolación Polinómica — Newton (Diferencias Divididas)")
 st.caption(
-    "Métodos Numéricos · Sesión 9 · Tabla de diferencias divididas, polinomio "
-    "P_n(x) = Σ f[x0..xk]·∏(x − x_j), evaluación anidada O(n) y comparación de grados."
+    "Métodos Numéricos · Sesión 9 · Diferencias divididas (P_n(x) = Σ f[x0..xk]·∏(x − x_j)) y "
+    "Newton-Gregory progresivo (nodos equiespaciados), con comparación de grados."
 )
 
 EJEMPLOS = {
@@ -71,6 +86,7 @@ EJEMPLOS = {
     },
     "GT - Newton-Gregory h=1, f(2.5)": {
         "x": X_GT_NG_H1, "y": Y_GT_NG_H1, "xeval": 2.5, "a": 0, "b": 4,
+        "metodo": "Newton-Gregory progresivo",
     },
     "GP - Problema para la clase, f(1)": {
         "x": X_GP_CLASE, "y": Y_GP_CLASE, "xeval": 1, "a": -1, "b": 3,
@@ -81,7 +97,21 @@ EJEMPLOS = {
     "GP - f(x)=(3+x)/(1+x), f(0.25)": {
         "x": X_GP_EJ2, "y": Y_GP_EJ2, "xeval": 0.25, "a": 0.1, "b": 0.4,
     },
+    "Repaso Examen 2 - Ej. 4: Puente colgante (3 nodos del profesor, x=50)": {
+        "x": X_REPASO_EJ4, "y": Y_REPASO_EJ4, "xeval": 50, "a": 40, "b": 80,
+        "metodo": "Diferencias divididas",
+    },
+    "Repaso Examen 2 - Ej. 4: Puente colgante (5 nodos, x=50)": {
+        "x": X_REPASO_EJ4_5N, "y": Y_REPASO_EJ4_5N, "xeval": 50, "a": 0, "b": 80,
+        "metodo": "Diferencias divididas",
+    },
+    "Repaso Examen 2 - Ej. 5: Asentamiento de zapata (Newton-Gregory, t=5)": {
+        "x": X_REPASO_EJ5, "y": Y_REPASO_EJ5, "xeval": XEVAL_REPASO_EJ5, "a": 0, "b": 6,
+        "metodo": "Newton-Gregory progresivo",
+    },
 }
+
+METODOS = ["Diferencias divididas", "Newton-Gregory progresivo"]
 
 # ---------------------------------------------------------------------
 # Aplicar un ejemplo pendiente ANTES de crear los widgets (mismo patron
@@ -99,6 +129,8 @@ if pendiente is not None:
     st.session_state["xeval9"] = float(ej["xeval"])
     st.session_state["a9"] = float(ej["a"])
     st.session_state["b9"] = float(ej["b"])
+    if "metodo" in ej:
+        st.session_state["metodo9"] = ej["metodo"]
     st.session_state.pop("grado9", None)
 
 # ---------------------------------------------------------------------
@@ -107,6 +139,7 @@ if pendiente is not None:
 with st.sidebar:
     st.header("⚙️ Configuración")
     n_nodos = st.number_input("Número de nodos n", min_value=2, max_value=12, step=1, key="n9")
+    metodo = st.radio("Método", METODOS, key="metodo9")
     x_eval = st.number_input("Punto a interpolar x_eval", format="%.4f", key="xeval9")
     st.markdown("**Intervalo de la gráfica**")
     a_graf = st.number_input("Desde", format="%.4f", key="a9")
@@ -157,29 +190,64 @@ if a_graf >= b_graf:
     st.stop()
 
 grado_max = n_nodos - 1
+usa_gregory = metodo == "Newton-Gregory progresivo"
+
+if usa_gregory:
+    equiespaciado, h = es_equiespaciado(xs)
+    if not equiespaciado:
+        st.error(
+            "Newton-Gregory requiere nodos igualmente espaciados (h constante), y estos no lo son. "
+            "Usa el método de diferencias divididas, que sirve con cualquier separación."
+        )
+        st.stop()
 
 # ---------------------------------------------------------------------
-# 2. Tabla de diferencias divididas
+# 2. Tabla de diferencias divididas  /  espaciado + diferencias finitas
 # ---------------------------------------------------------------------
-st.subheader("2️⃣ Tabla de Diferencias Divididas (TDD)")
-F = diferencias_divididas(xs, ys)
-cols = ["f[x_i]"] + [f"{j}.ª diferencia" for j in range(1, n_nodos)]
-df_F = pd.DataFrame(F, columns=cols)
-df_F.insert(0, "x_i", xs)
-st.dataframe(
-    df_F.style.format(lambda v: "" if pd.isna(v) else f"{v:.6g}")
-    .apply(lambda fila: ["background-color: #fff3cd; font-weight: bold" if fila.name == 0 and c != "x_i" else ""
-                         for c in fila.index], axis=1),
-    width="stretch", hide_index=True,
-)
-st.caption("La primera fila (resaltada) contiene los coeficientes de Newton f[x0], f[x0,x1], f[x0,x1,x2], …")
-coef = F[0, :]
+_resaltar_primera_fila = lambda fila: [  # noqa: E731
+    "background-color: #fff3cd; font-weight: bold" if fila.name == 0 and c != "x_i" else "" for c in fila.index
+]
+
+if usa_gregory:
+    st.subheader("2️⃣ Espaciado uniforme y tabla de diferencias finitas progresivas")
+    st.success(f"Los nodos están igualmente espaciados: h = {h:g}.")
+    D = diferencias_finitas(ys)
+    cols = ["f_i"] + [f"Δ^{j} f" for j in range(1, n_nodos)]
+    df_D = pd.DataFrame(D, columns=cols)
+    df_D.insert(0, "x_i", xs)
+    st.dataframe(
+        df_D.style.format(lambda v: "" if pd.isna(v) else f"{v:.6g}").apply(_resaltar_primera_fila, axis=1),
+        width="stretch", hide_index=True,
+    )
+    st.caption(
+        "La primera fila (resaltada) contiene f₀, Δf₀, Δ²f₀, … Los coeficientes de Newton son "
+        "aᵢ = Δⁱf₀ / (i!·hⁱ)."
+    )
+    coef = coeficientes_newton_gregory(xs, ys)
+else:
+    st.subheader("2️⃣ Tabla de Diferencias Divididas (TDD)")
+    F = diferencias_divididas(xs, ys)
+    cols = ["f[x_i]"] + [f"{j}.ª diferencia" for j in range(1, n_nodos)]
+    df_F = pd.DataFrame(F, columns=cols)
+    df_F.insert(0, "x_i", xs)
+    st.dataframe(
+        df_F.style.format(lambda v: "" if pd.isna(v) else f"{v:.6g}").apply(_resaltar_primera_fila, axis=1),
+        width="stretch", hide_index=True,
+    )
+    st.caption("La primera fila (resaltada) contiene los coeficientes de Newton f[x0], f[x0,x1], f[x0,x1,x2], …")
+    coef = F[0, :]
 
 # ---------------------------------------------------------------------
 # 3. Polinomio en forma de Newton y en forma estandar
 # ---------------------------------------------------------------------
 st.subheader(f"3️⃣ Polinomio interpolador P_{grado_max}(x)")
-st.markdown(f"**Forma de Newton:** P_{grado_max}(x) = {forma_newton_texto(xs, coef)}")
+if usa_gregory:
+    st.markdown(
+        f"**Newton-Gregory progresivo:** P_{grado_max}(x) = {forma_gregory_texto(D[0])}, "
+        f"con s = (x − x₀)/h = (x − {xs[0]:g})/{h:g}"
+    )
+else:
+    st.markdown(f"**Forma de Newton:** P_{grado_max}(x) = {forma_newton_texto(xs, coef)}")
 est = coeficientes_estandar(xs, coef)
 st.markdown(f"**Forma estándar:** P_{grado_max}(x) = {polinomio_a_texto(est)}")
 st.dataframe(
@@ -191,9 +259,18 @@ st.dataframe(
 # 4. Evaluacion en x_eval + validacion en los nodos
 # ---------------------------------------------------------------------
 st.subheader(f"4️⃣ Evaluación en x_eval = {x_eval:g}")
-st.dataframe(pd.DataFrame(tabla_terminos(xs, ys, x_eval)), width="stretch", hide_index=True)
-y_eval = evaluar_newton(xs, coef, x_eval)
-st.metric(f"P_{grado_max}({x_eval:g})", f"{y_eval:.6f}")
+if usa_gregory:
+    filas_g, s_eval, _ = tabla_terminos_gregory(xs, ys, x_eval)
+    st.info(f"s = (x_eval − x₀)/h = ({x_eval:g} − {xs[0]:g})/{h:g} = {s_eval:g}")
+    st.dataframe(pd.DataFrame(filas_g), width="stretch", hide_index=True)
+    y_eval = filas_g[-1]["acumulado = P_k(x)"]
+    st.metric(f"P_{grado_max}({x_eval:g})", f"{y_eval:.6f}")
+    y_dd = evaluar_newton(xs, coeficientes_newton(xs, ys), x_eval)
+    st.caption(f"Comprobación con diferencias divididas: P_{grado_max}({x_eval:g}) = {y_dd:.6f} (es el mismo polinomio).")
+else:
+    st.dataframe(pd.DataFrame(tabla_terminos(xs, ys, x_eval)), width="stretch", hide_index=True)
+    y_eval = evaluar_newton(xs, coef, x_eval)
+    st.metric(f"P_{grado_max}({x_eval:g})", f"{y_eval:.6f}")
 
 if not (xs.min() <= x_eval <= xs.max()):
     st.warning("x_eval está fuera del rango de los nodos: eso es EXTRAPOLACIÓN, el error puede ser grande.")

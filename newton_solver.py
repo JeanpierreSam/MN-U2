@@ -233,6 +233,57 @@ def coeficientes_newton_gregory(X, Y):
     return np.array([D[0, i] / (factorial(i) * h ** i) for i in range(len(xs))])
 
 
+def forma_gregory_texto(D0, decimales=6):
+    """
+    Texto de la formula de Newton-Gregory progresivo con los D^k f_0
+    numericos (primera fila de la tabla de diferencias finitas):
+
+        f0 + Df0*s + D2f0*s(s-1)/2! + D3f0*s(s-1)(s-2)/3! + ...   con s = (x - x0)/h
+    """
+    partes = []
+    for k, d in enumerate(D0):
+        d = round(float(d), decimales)
+        if k == 0:
+            partes.append(f"{d:g}")
+            continue
+        factores = "s" + "".join(f"(s − {j})" for j in range(1, k))
+        partes.append(f"{d:g}·{factores}" + (f"/{k}!" if k > 1 else ""))
+    return " + ".join(partes).replace("+ -", "- ")
+
+
+def tabla_terminos_gregory(X, Y, x_eval):
+    """
+    Detalle paso a paso de P(x_eval) con Newton-Gregory progresivo: por cada
+    k, la diferencia D^k f_0, el factor s(s-1)...(s-k+1)/k!, el aporte de ese
+    termino y la suma acumulada (= P_k(x_eval)).
+
+    Retorna (filas, s, h) con s = (x_eval - x0)/h. Requiere nodos igualmente
+    espaciados (ValueError en caso contrario).
+    """
+    xs, ys = validar_nodos(X, Y)
+    ok, h = es_equiespaciado(xs)
+    if not ok:
+        raise ValueError("Newton-Gregory requiere nodos igualmente espaciados.")
+    D = diferencias_finitas(ys)
+    s = (x_eval - xs[0]) / h
+    filas = []
+    factor = 1.0
+    acumulado = 0.0
+    for k in range(len(xs)):
+        if k > 0:
+            factor *= (s - (k - 1)) / k          # s(s-1)...(s-k+1) / k!
+        aporte = D[0, k] * factor
+        acumulado += aporte
+        filas.append({
+            "k": k,
+            "Δ^k f_0": float(D[0, k]),
+            "s(s−1)…(s−k+1)/k!": float(factor),
+            "término": float(aporte),
+            "acumulado = P_k(x)": float(acumulado),
+        })
+    return filas, float(s), float(h)
+
+
 # ---------------------------------------------------------------------
 # Error de interpolacion - GT, "Limitante superior para el error"
 # ---------------------------------------------------------------------
@@ -286,6 +337,23 @@ X_GP_EJ1 = [0, 0.5, 1.0]         # P2(x) = -5.6x^2 + 5.2x + 1.3 ; f(0.8) = 1.876
 Y_GP_EJ1 = [1.3, 2.5, 0.9]
 X_GP_EJ2 = [0.1, 0.2, 0.4]       # P2(x) = x^2 - 1.8x + 2.99 ; f(0.25) = 2.6025
 Y_GP_EJ2 = [2.82, 2.67, 2.43]
+
+
+# --- Repaso Examen 2, Ejercicio 4: deflexion del cable de un puente colgante ---
+# x en m, f(x) en cm; estimar en x = 50 y x = 70. El profesor usa los 3 nodos mas
+# cercanos (40, 60, 80) -> P2(x) = 0.015x^2 - 0.85x + 32 ; P2(50) = 27, P2(70) = 46.
+X_REPASO_EJ4 = [40, 60, 80]
+Y_REPASO_EJ4 = [22, 35, 60]
+# Variante con los 5 datos (grado 4): P4(50) = 27.1875, P4(70) = 45.9375.
+X_REPASO_EJ4_5N = [0, 20, 40, 60, 80]
+Y_REPASO_EJ4_5N = [0, 15, 22, 35, 60]
+
+# --- Repaso Examen 2, Ejercicio 5: asentamiento de una zapata (Newton-Gregory) ---
+# t en horas, asentamiento en mm; h = 2; estimar a las 5 h -> P3(5) = 4.75 mm
+# P3(t) = 0.0125t^3 - 0.0375t^2 + 0.825t
+X_REPASO_EJ5 = [0, 2, 4, 6]
+Y_REPASO_EJ5 = [0.0, 1.6, 3.5, 6.3]
+XEVAL_REPASO_EJ5 = 5
 
 
 if __name__ == "__main__":
@@ -344,3 +412,14 @@ if __name__ == "__main__":
     print("Ej1 f(0.8) =", newton(X_GP_EJ1, Y_GP_EJ1, 0.8))                          # 1.876
     a = newton(X_GP_EJ2, Y_GP_EJ2, 0.25)
     print("Ej2 f(0.25) =", a, "| error abs =", abs(a - 3.25 / 1.25))                 # 2.6025 | 0.0025
+
+    print("\n=== Repaso Examen 2, Ej. 5: asentamiento (Newton-Gregory progresivo) ===")
+    filas, s_g, h_g = tabla_terminos_gregory(X_REPASO_EJ5, Y_REPASO_EJ5, XEVAL_REPASO_EJ5)
+    print("h =", h_g, "| s =", s_g)                                            # h = 2 | s = 2.5
+    print("terminos:", [round(f["término"], 4) for f in filas])               # [0, 4, 0.5625, 0.1875]
+    print("P3(5) =", filas[-1]["acumulado = P_k(x)"])                         # 4.75 mm
+
+    print("\n=== Repaso Examen 2, Ej. 4: puente colgante (Newton, nodos 40, 60, 80) ===")
+    c4 = coeficientes_newton(X_REPASO_EJ4, Y_REPASO_EJ4)
+    print("coef =", c4, "| P2(x) =", polinomio_a_texto(coeficientes_estandar(X_REPASO_EJ4, c4)))   # 0.015x^2 - 0.85x + 32
+    print("P2(50) =", newton(X_REPASO_EJ4, Y_REPASO_EJ4, 50), "| P2(70) =", newton(X_REPASO_EJ4, Y_REPASO_EJ4, 70))  # 27 | 46
