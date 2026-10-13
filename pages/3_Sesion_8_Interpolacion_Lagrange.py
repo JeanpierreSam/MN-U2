@@ -15,6 +15,11 @@ import streamlit as st
 
 from lagrange_solver import (
     INTERVALO_GAA,
+    X_REPASO_EJ3_O2,
+    X_REPASO_EJ3_O3,
+    XEVAL_REPASO_EJ3,
+    Y_REPASO_EJ3_O2,
+    Y_REPASO_EJ3_O3,
     X_GAA_LATENCIA,
     X_GP_CLASE,
     X_GP_EJ1,
@@ -53,6 +58,12 @@ EJEMPLOS = {
     },
     "GP - Sesión 8: f(x)=(3+x)/(1+x), f(0.25) (3 nodos)": {
         "x": X_GP_EJ2, "y": Y_GP_EJ2, "xeval": 0.25, "a": 0.1, "b": 0.4,
+    },
+    "Repaso Examen 2 - Ej. 3: f(2.8), orden 2 (3 nodos)": {
+        "x": X_REPASO_EJ3_O2, "y": Y_REPASO_EJ3_O2, "xeval": XEVAL_REPASO_EJ3, "a": 2, "b": 3.2,
+    },
+    "Repaso Examen 2 - Ej. 3: f(2.8), orden 3 (4 nodos)": {
+        "x": X_REPASO_EJ3_O3, "y": Y_REPASO_EJ3_O3, "xeval": XEVAL_REPASO_EJ3, "a": 2, "b": 4,
     },
 }
 

@@ -193,6 +193,13 @@ Y_GP_EJ1 = [1.3, 2.5, 0.9]
 X_GP_EJ2 = [0.1, 0.2, 0.4]
 Y_GP_EJ2 = [2.82, 2.67, 2.43]
 
+# Repaso Examen 2, Ej. 3: f(2.8) con Lagrange de orden 2 y orden 3
+X_REPASO_EJ3_O2 = [2, 2.5, 3.2]
+Y_REPASO_EJ3_O2 = [8, 14, 15]
+X_REPASO_EJ3_O3 = [2, 2.5, 3.2, 4]
+Y_REPASO_EJ3_O3 = [8, 14, 15, 8]
+XEVAL_REPASO_EJ3 = 2.8
+
 
 if __name__ == "__main__":
     print("=== GAA: Latencia vs. memoria (Lagrange, n = 3) ===")
